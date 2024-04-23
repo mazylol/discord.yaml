@@ -1,5 +1,7 @@
 mod config;
 
+use anyhow::Context as Ctx;
+use anyhow::Result;
 use config::Config;
 
 use serenity::async_trait;
@@ -25,8 +27,8 @@ impl EventHandler for Handler {
 }
 
 #[tokio::main]
-async fn main() {
-    let config = Config::load().unwrap();
+async fn main() -> Result<()> {
+    let config = Config::load().context("Failed to load config")?;
 
     let intents = GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::DIRECT_MESSAGES
@@ -35,7 +37,8 @@ async fn main() {
     let mut client = Client::builder(config.token.clone(), intents)
         .event_handler(Handler)
         .await
-        .expect("Err creating client");
+        .context("Failed to initialize client")
+        .unwrap();
 
     {
         let mut data = client.data.write().await;
@@ -45,4 +48,6 @@ async fn main() {
     if let Err(why) = client.start().await {
         println!("Client error: {why}");
     }
+
+    Ok(())
 }
