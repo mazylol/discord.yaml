@@ -4,6 +4,8 @@ use anyhow::Context as Ctx;
 use anyhow::Result;
 use config::Config;
 
+use serenity::all::ActivityData;
+use serenity::all::Ready;
 use serenity::async_trait;
 use serenity::model::channel::Message;
 use serenity::prelude::*;
@@ -16,6 +18,8 @@ impl EventHandler for Handler {
         let data = ctx.data.read().await;
         let config = data.get::<Config>().unwrap();
 
+        println!("{}", config.presence.description);
+
         for (key, value) in config.responses.iter() {
             if msg.content.contains(key) {
                 if let Err(why) = msg.channel_id.say(&ctx.http, value).await {
@@ -23,6 +27,27 @@ impl EventHandler for Handler {
                 }
             }
         }
+    }
+
+    async fn ready(&self, ctx: Context, ready: Ready) {
+        println!(
+            "Bot Logged in as {}#{}",
+            ready.user.name,
+            ready.user.discriminator.unwrap()
+        );
+
+        let data = ctx.data.read().await;
+        let config = data.get::<Config>().unwrap();
+
+        ctx.set_presence(
+            Some(ActivityData {
+                name: config.presence.description.clone(),
+                kind: config.presence.activity,
+                state: None,
+                url: None,
+            }),
+            config.presence.status,
+        );
     }
 }
 
