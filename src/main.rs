@@ -4,13 +4,10 @@ use anyhow::Context as Ctx;
 use anyhow::Result;
 use config::Config;
 
-use serenity::all::ActivityData;
-use serenity::all::CreateCommand;
-use serenity::all::CreateInteractionResponse;
-use serenity::all::CreateInteractionResponseMessage;
-use serenity::all::GuildId;
-use serenity::all::Interaction;
-use serenity::all::Ready;
+use serenity::all::{
+    ActivityData, CreateCommand, CreateInteractionResponse, CreateInteractionResponseMessage,
+    GuildId, Interaction, Ready,
+};
 use serenity::async_trait;
 use serenity::model::channel::Message;
 use serenity::prelude::*;
