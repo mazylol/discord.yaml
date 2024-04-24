@@ -54,10 +54,42 @@ where
 }
 
 #[derive(Deserialize, Debug, Clone)]
+pub struct TextCommand {
+    pub name: String,
+    pub response: String,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct TextCommands {
+    pub prefix: char,
+    pub commands: Vec<TextCommand>,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct SlashCommand {
+    pub name: String,
+    pub description: String,
+    pub response: String,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct SlashCommands {
+    pub commands: Vec<SlashCommand>,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct Commands {
+    pub text: TextCommands,
+    pub slash: SlashCommands,
+}
+
+#[derive(Deserialize, Debug, Clone)]
 pub struct Config {
     pub token: String,
-    pub responses: HashMap<String, String>,
-    pub presence: Presence,
+    pub guild_id: u64,
+    pub responses: Option<HashMap<String, String>>,
+    pub presence: Option<Presence>,
+    pub commands: Option<Commands>,
 }
 
 impl serenity::prelude::TypeMapKey for Config {
