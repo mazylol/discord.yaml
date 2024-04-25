@@ -79,8 +79,8 @@ pub struct SlashCommands {
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Commands {
-    pub text: TextCommands,
-    pub slash: SlashCommands,
+    pub text: Option<TextCommands>,
+    pub slash: Option<SlashCommands>,
 }
 
 #[derive(Deserialize, Debug, Clone)]

@@ -31,14 +31,16 @@ impl EventHandler for Handler {
         }
 
         if let Some(commands) = &config.commands {
-            if msg.content.starts_with(commands.text.prefix) {
-                for command in &commands.text.commands {
-                    if msg
-                        .content
-                        .starts_with(&format!("{}{}", commands.text.prefix, command.name))
-                    {
-                        if let Err(why) = msg.reply_ping(&ctx.http, &command.response).await {
-                            println!("Error sending message: {why:?}");
+            if let Some(text) = &commands.text {
+                if msg.content.starts_with(text.prefix) {
+                    for command in &text.commands {
+                        if msg
+                            .content
+                            .starts_with(&format!("{}{}", text.prefix, command.name))
+                        {
+                            if let Err(why) = msg.reply_ping(&ctx.http, &command.response).await {
+                                println!("Error sending message: {why:?}");
+                            }
                         }
                     }
                 }
@@ -52,19 +54,21 @@ impl EventHandler for Handler {
 
         if let Interaction::Command(command) = interaction {
             if let Some(commands) = &config.commands {
-                for slash_command in &commands.slash.commands {
-                    match command
-                        .create_response(
-                            &ctx.http,
-                            CreateInteractionResponse::Message(
-                                CreateInteractionResponseMessage::new()
-                                    .content(&slash_command.response),
-                            ),
-                        )
-                        .await
-                    {
-                        Ok(_) => {}
-                        Err(why) => println!("Error sending message: {:?}", why),
+                if let Some(slash) = &commands.slash {
+                    for slash_command in &slash.commands {
+                        match command
+                            .create_response(
+                                &ctx.http,
+                                CreateInteractionResponse::Message(
+                                    CreateInteractionResponseMessage::new()
+                                        .content(&slash_command.response),
+                                ),
+                            )
+                            .await
+                        {
+                            Ok(_) => {}
+                            Err(why) => println!("Error sending message: {:?}", why),
+                        }
                     }
                 }
             }
@@ -94,15 +98,18 @@ impl EventHandler for Handler {
         }
 
         if let Some(commands) = &config.commands {
-            for command in &commands.slash.commands {
-                let command = CreateCommand::new(&command.name).description(&command.description);
+            if let Some(slash) = &commands.slash {
+                for command in &slash.commands {
+                    let command =
+                        CreateCommand::new(&command.name).description(&command.description);
 
-                if let Err(why) = ctx
-                    .http
-                    .create_guild_command(GuildId::from(config.guild_id.clone()), &command)
-                    .await
-                {
-                    println!("Error creating command: {why:?}");
+                    if let Err(why) = ctx
+                        .http
+                        .create_guild_command(GuildId::from(config.guild_id.clone()), &command)
+                        .await
+                    {
+                        println!("Error creating command: {why:?}");
+                    }
                 }
             }
         }
