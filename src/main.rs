@@ -4,6 +4,8 @@ use anyhow::Context as Ctx;
 use anyhow::Result;
 use config::Config;
 
+use tracing as log;
+
 use serenity::all::{
     ActivityData, CreateCommand, CreateInteractionResponse, CreateInteractionResponseMessage,
     GuildId, Interaction, Ready,
@@ -24,8 +26,10 @@ impl EventHandler for Handler {
             for (key, value) in responses.iter() {
                 if msg.content.contains(key) {
                     if let Err(why) = msg.reply_ping(&ctx.http, value).await {
-                        println!("Error sending message: {why:?}");
+                        log::error!("Error sending message: {why:?}");
                     }
+
+                    log::info!("Responded to message containing: {key}");
                 }
             }
         }
@@ -39,10 +43,12 @@ impl EventHandler for Handler {
                             .starts_with(&format!("{}{}", text.prefix, command.name))
                         {
                             if let Err(why) = msg.reply_ping(&ctx.http, &command.response).await {
-                                println!("Error sending message: {why:?}");
+                                log::error!("Error sending message: {why:?}");
                             }
                         }
                     }
+
+                    log::info!("Responded to command {}", msg.content);
                 }
             }
         }
@@ -66,8 +72,10 @@ impl EventHandler for Handler {
                             )
                             .await
                         {
-                            Ok(_) => {}
-                            Err(why) => println!("Error sending message: {:?}", why),
+                            Ok(_) => {
+                                log::info!("Responded to command: {:?}", slash_command.name)
+                            }
+                            Err(why) => log::error!("Error sending message: {:?}", why),
                         }
                     }
                 }
@@ -76,7 +84,7 @@ impl EventHandler for Handler {
     }
 
     async fn ready(&self, ctx: Context, ready: Ready) {
-        println!(
+        log::info!(
             "Bot Logged in as {}#{}",
             ready.user.name,
             ready.user.discriminator.unwrap()
@@ -95,6 +103,8 @@ impl EventHandler for Handler {
                 }),
                 presence.status,
             );
+
+            log::info!("Presence set to: {:?}", presence);
         }
 
         if let Some(commands) = &config.commands {
@@ -108,9 +118,11 @@ impl EventHandler for Handler {
                         .create_guild_command(GuildId::from(config.guild_id.clone()), &command)
                         .await
                     {
-                        println!("Error creating command: {why:?}");
+                        log::error!("Error creating command: {why:?}");
                     }
                 }
+
+                log::info!("Slash commands registered: {:?}", slash.commands);
             }
         }
     }
@@ -118,6 +130,8 @@ impl EventHandler for Handler {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    tracing_subscriber::fmt::init();
+
     let config = Config::load().context("Failed to load config")?;
 
     let intents = GatewayIntents::GUILD_MESSAGES
@@ -136,7 +150,7 @@ async fn main() -> Result<()> {
     }
 
     if let Err(why) = client.start().await {
-        println!("Client error: {why}");
+        log::error!("Client error: {why}");
     }
 
     Ok(())
