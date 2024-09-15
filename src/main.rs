@@ -45,10 +45,10 @@ impl EventHandler for Handler {
                             if let Err(why) = msg.reply_ping(&ctx.http, &command.response).await {
                                 log::error!("Error sending message: {why:?}");
                             }
+
+                            log::info!("Responded to text command: {}", msg.content);
                         }
                     }
-
-                    log::info!("Responded to command {}", msg.content);
                 }
             }
         }
@@ -62,20 +62,25 @@ impl EventHandler for Handler {
             if let Some(commands) = &config.commands {
                 if let Some(slash) = &commands.slash {
                     for slash_command in &slash.commands {
-                        match command
-                            .create_response(
-                                &ctx.http,
-                                CreateInteractionResponse::Message(
-                                    CreateInteractionResponseMessage::new()
-                                        .content(&slash_command.response),
-                                ),
-                            )
-                            .await
-                        {
-                            Ok(_) => {
-                                log::info!("Responded to command: {:?}", slash_command.name)
+                        if command.data.name == slash_command.name {
+                            match command
+                                .create_response(
+                                    &ctx.http,
+                                    CreateInteractionResponse::Message(
+                                        CreateInteractionResponseMessage::new()
+                                            .content(&slash_command.response),
+                                    ),
+                                )
+                                .await
+                            {
+                                Ok(_) => {
+                                    log::info!(
+                                        "Responded to slash command: {:?}",
+                                        slash_command.name
+                                    )
+                                }
+                                Err(why) => log::error!("Error sending message: {:?}", why),
                             }
-                            Err(why) => log::error!("Error sending message: {:?}", why),
                         }
                     }
                 }
